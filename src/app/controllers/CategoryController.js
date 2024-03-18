@@ -22,7 +22,10 @@ class CategoryController {
 
     const { name } = request.body;
 
-    const { filename: path } = request.file;
+    let path = null;
+    if (request.file) {
+      path = request.file.filename;
+    }
 
     const categoryExists = await Category.findOne({
       where: {
@@ -40,12 +43,8 @@ class CategoryController {
   }
 
   async index(request, response) {
-    const category = await Category.findAll();
-
-    return response.json(category);
-  }
-  catch(err) {
-    console.log(err);
+    const categories = await Category.findAll();
+    return response.json(categories);
   }
 
   async update(request, response) {
@@ -66,28 +65,22 @@ class CategoryController {
     }
 
     const { name } = request.body;
-
     const { id } = request.params;
 
     const category = await Category.findByPk(id);
 
     if (!category) {
-      return response
-        .status(401)
-        .json({ error: "Make sure your category ID is correct" });
+      return response.status(404).json({ error: "Category not found" });
     }
 
-    let path;
+    let path = category.path;
     if (request.file) {
       path = request.file.filename;
     }
 
-    await Category.update({ name, path }, { where: { id } });
+    await category.update({ name, path });
 
-    return response.status(200).json();
-  }
-  catch(err) {
-    console.log(err);
+    return response.status(200).json(category);
   }
 }
 
